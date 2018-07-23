@@ -1,0 +1,25 @@
+# For a quick start check out our HTTP Requests collection (Tools|HTTP Client|Open HTTP Requests Collection).
+#
+# Following HTTP Request Live Templates are available:
+# * 'gtrp' and 'gtr' create a GET request with or without query parameters;
+# * 'ptr' and 'ptrp' create a POST request with a simple or parameter-like body;
+# * 'mptr' and 'fptr' create a POST request to submit a form with a text or file field (multipart/form-data);
+
+GET {{host}}/reviews/
+Accept: application/json
+
+###
+
+POST {{host}}/reviews/
+Content-Type: application/json
+
+{
+    "restaurant_id": 10,
+    "name": "Anyul",
+    "createdAt": 1504095567183,
+    "updatedAt": 1504095567183,
+    "rating": 5,
+    "comments": "Head to this laid-back Long Island City restaurant for beef tongue tacos, chicken smothered in a heady mole sauce, and a monster crab tostada. New York's only Michelin-starred Mexican restaurant is an especially cool choice for lunch during the week or drinks after work. Eater critic Ryan Sutton awarded this restaurant two stars."
+  }
+
+###

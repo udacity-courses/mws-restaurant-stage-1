@@ -9,6 +9,10 @@ if ("serviceWorker" in navigator) {
             .then(() => console.log("Service Worker Registered"))
             .catch(error => console.error("Error registering service worker", error));
     });
+    window.addEventListener("online", () => {
+        const serviceWorker = navigator.serviceWorker.ready;
+        serviceWorker.sync.register("Synchronize");
+    });
 }
 
 /**
@@ -47,6 +51,7 @@ const fetchRestaurantFromURL = () => {
  * @param {string} restaurant.name
  * @param {string} restaurant.address
  * @param {string} restaurant.cuisine_type
+ * @param {string} restaurant.is_favorite - is favorite
  * @param {string} restaurant.photograph
  * @param {Object[]} restaurant.operating_hours
  * @param {Object[]} restaurant.reviews
@@ -54,6 +59,9 @@ const fetchRestaurantFromURL = () => {
 const fillRestaurantHTML = restaurant => {// eslint-disable-line max-statements
     const name = document.getElementById("restaurant-name");
     name.innerHTML = restaurant.name;
+    const favoriteIconSpan = document.getElementById("isFavorite");
+    favoriteIconSpan.innerHTML = restaurant.is_favorite === "true" ? "💘" : "💙";
+    favoriteIconSpan.className = "isFavorite";
 
     const address = document.getElementById("restaurant-address");
     address.innerHTML = restaurant.address;
@@ -184,4 +192,112 @@ const getParameterByName = (name, url = window.location.href) => {
         return "";
     }
     return decodeURIComponent(results[2].replace(/\+/g, " "));
+};
+
+/**
+ * Get form data
+ * @param {Object} restaurant - restaurant
+ * @return {{rating:number, comment:string}|boolean} form data
+ */
+const getFormData = restaurant => ({
+    name: document.getElementById("reviewer-name").value || "",
+    restaurant_id: restaurant.id,
+    rating: document.getElementById("rating").value || 1,
+    comment: document.getElementById("review").value || "",
+});
+
+/**
+ * Fetch Restaurants reviews
+ * @param {object} restaurant - restaurant
+ * @return {*}
+ */
+const fetchRestaurantReviews = restaurant => DBHelper.fetchReviews()
+    .then(response => {
+        const restaurantReviews = response.filter(obj => obj.restaurant_id === restaurant.id);
+        return fillReviewsHTML(restaurantReviews);
+    });
+
+/**
+ * Add review offline
+ * @param {object} review - restaurant review
+ */
+const addOfflineReview = review => {
+    const container = document.getElementById("reviews-container");
+    const title = document.createElement("h4");
+    title.innerHTML = "Reviews";
+    container.appendChild(title);
+    const ul = document.getElementById("reviews-list");
+    ul.appendChild(createReviewHTML(review));
+    container.appendChild(ul);
+};
+
+/**
+ * Favorite a restaurant
+ */
+const favoriteRestaurant = () => {
+    const favoriteIconHtml = document.getElementById("isFavorite");
+    const data = {
+        id: self.restaurant.id,
+        isFavorited: favoriteIconHtml.innerHTML === "💘" || false,
+    };
+    if (navigator.onLine) {
+        data.isFavorited = !data.isFavorited;
+        DBHelper.favoriteRestaurant(data)
+            .then(() => favoriteIconHtml.innerHTML = data.isFavorited ? "💘" : "💙")
+            .catch(error => console.error("Unable to favorite restaurant", error));
+    } else {
+        data.isFavorited = !data.isFavorited;
+        favoriteIconHtml.innerHTML = data.isFavorited ? "💘" : "💙";
+        saveLocalFavorite([{id: data.id, isFavorited: data.isFavorited, type: "favorite"}]);
+    }
+};
+
+/**
+ * save favorite  on localStorage
+ * @param {object} favorite - restaurant review
+ */
+const saveLocalFavorite = favorite => {
+    let pendingFavorites = localStorage.getItem("pendingFavorites");
+    if (pendingFavorites) {
+        pendingFavorites = JSON.parse(pendingFavorites);
+        pendingFavorites = pendingFavorites.concat([favorite]);
+    }
+    localStorage.setItem("PendingFavs", JSON.stringify(pendingFavorites));
+};
+
+
+/**
+ * save review  on localStorage
+ * @param {object} review - restaurant review
+ */
+const saveLocalReview = review => {
+    let pendingReviews = localStorage.getItem("pendingReviews");
+    if (pendingReviews) {
+        pendingReviews = JSON.parse(pendingReviews);
+        pendingReviews = pendingReviews.concat([review]);
+    }
+    localStorage.setItem("PendingReviews", JSON.stringify(pendingReviews));
+};
+
+/**
+ * Send Restaurant Review
+ * @param {object} restaurant - restaurant
+ */
+const sendReview = restaurant => {
+    const form = document.getElementById("review_form");
+    const data = getFormData(restaurant);
+    if (navigator.onLine) {
+        DBHelper.postReview(data);
+        form.reset();
+        fetchRestaurantReviews(restaurant);
+    } else {
+        const review = {
+            createdAt: Date.now(),
+            type: "review",
+            id: data.createdAt,
+        };
+        addOfflineReview(review);
+        saveLocalReview(review);
+        form.reset();
+    }
 };

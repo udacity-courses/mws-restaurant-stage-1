@@ -4,9 +4,10 @@ self.importScripts("js/idb.js");
 
 const objectStore = "objectStore";
 
+// eslint-disable-next-line no-undef
 const dbPromise = idb.open("restaurant-store", 1, upgradeDB => {
     upgradeDB.createObjectStore(objectStore);
-});// eslint-disable-line no-undef
+});
 
 const staticCache = "restaurant-static";
 const staticAssets = [
@@ -59,11 +60,23 @@ self.addEventListener("activate", event => {
     );
 });
 
+self.addEventListener("sync", event => {
+    const url = "https://mws-restaurants-stage-3.herokuapp.com";
+    if (event.tag === "Synchronize") {
+        const pendingReviews = JSON.parse(localStorage.getItem("pendingReviews"));
+        const pendingFavorites = JSON.parse(localStorage.getItem("pendingFavorites"));
+        let pendingRequests = [Promise.all(pendingReviews.map(review => fetch(`${url}/reviews/`, {body: review, method: "POST"})))];
+        pendingRequests = pendingRequests.concat(Promise.all(pendingFavorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`))));
+        event.waitUntil(Promise.all(pendingRequests));
+        // Promise.all(pendingReviews.map(url => fetch(url).then(resp => resp.text()))).then(texts => {console.log("finished", texts);});
+    }
+});
+
 /**
  * Fetch from network event
  */
 self.addEventListener("fetch", event => {
-    const port = event.request.url.split("/")[2].split(":")[1];
+    const port = event.request.url.split("/")[2].split(":")[1];// eslint-disable-line prefer-destructuring
     if (port !== undefined && port === "1337") {
         event.respondWith(serveResponseIdb(event.request));
     } else {
@@ -80,24 +93,23 @@ const serveResponseIdb = request => {
     dbPromise
         .then(db => {
             const response = new Response(db.transaction(objectStore).objectStore(objectStore).get(request.url));
-            return Promise.resolve(response);
+            return Promise.resolve(response);// eslint-disable-line promise/no-return-wrap
         })
         .catch(error => console.error("Unable to access cache: ", error));
 
     return fetch(request)
         .then(fetchResponse => {
             if (fetchResponse.headers.get("Content-Type").match(/application\/json/i)) {
-                dbPromise
-                    .then(db => {
-                        fetchResponse.clone().json().then(content => {
-                            const tx = db.transaction(objectStore, "readwrite");
-                            tx.objectStore(objectStore)
-                                .put(content, request.url)
-                                .then(response => console.info("put operation succeed: ", response))
-                                .catch(error => console.error("Put operation failed: ", error));
-                            return tx.complete;
-                        });
-                    })
+                dbPromise.then(db => {// eslint-disable-line promise/always-return, promise/no-nesting
+                    fetchResponse.clone().json().then(content => {// eslint-disable-line promise/catch-or-return, promise/no-nesting
+                        const tx = db.transaction(objectStore, "readwrite");
+                        tx.objectStore(objectStore)// eslint-disable-line promise/no-nesting
+                            .put(content, request.url)
+                            .then(response => console.info("put operation succeed: ", response))
+                            .catch(error => console.error("Put operation failed: ", error));
+                        return tx.complete;
+                    });
+                })
                     .catch(error => console.error("Error opening transaction: ", error));
             }
 
@@ -114,7 +126,7 @@ const serveResponseIdb = request => {
 const serveResource = request =>
     caches.open(staticCache)
         .then(cache =>
-            cache.match(request)
+            cache.match(request)// eslint-disable-line promise/no-nesting
                 .then(response => {
                     if (response) {
                         return response;

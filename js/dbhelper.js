@@ -3,6 +3,7 @@
 /** @namespace google.maps */
 /** @namespace google.maps.Marker */
 /** @namespace google.maps.Animation */
+
 /** @namespace google.maps.Animation.DROP */
 
 /**
@@ -15,7 +16,8 @@ class DBHelper {
      * @return {string} host
      */
     static get DATABASE_URL() {
-        return "http://localhost:1337";
+        // return "http://localhost:1337";
+        return "https://mws-restaurants-stage-3.herokuapp.com";
     }
 
     /**
@@ -27,6 +29,44 @@ class DBHelper {
             .then(response => response.json())
             .then(json => json)
             .catch(error => console.error("Fetch Restaurants error: ", error));
+    }
+
+    /**
+     * Fetch restaurant reviews
+     * @return {Promise<Object[]>|null}
+     */
+    static fetchReviews() {
+        return fetch(`${DBHelper.DATABASE_URL}/reviews`)
+            .then(response => response.json())
+            .then(reviews => reviews)
+            .catch(error => console.error("unable to retrieve restaurant reviews", error));
+    }
+
+    /**
+     * post restaurant review
+     * @param {object} data - review data
+     */
+    static postReview(data) {
+        fetch(`${DBHelper.DATABASE_URL}/reviews`,
+            {
+                body: JSON.stringify(data),
+                method: "POST",
+            })
+            .then(result => console.log("Post succeeded ", result))
+            .catch(error => console.error("error in sending review ==> ", error));
+    }
+
+    /**
+     * Favorite a reastaurant
+     * @param {object} restaurant - restaurant
+     * @param {number} restaurant.id - identifier
+     * @param {boolean} restaurant.isFavorited - indicates is restaurant is favorited
+     * @return {*} return the promise response
+     */
+    static favoriteRestaurant(restaurant) {
+        return fetch(`${DBHelper.DATABASE_URL}restaurants/${restaurant.id}/?is_favorite=${!restaurant.isFavorited}`, {method: "PUT",})
+            .then(result => result)
+            .catch(error => console.error("error in sending favorite ==> ", error));
     }
 
     /**
