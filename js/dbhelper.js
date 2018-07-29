@@ -66,7 +66,7 @@ class DBHelper {
      * @return {*} return the promise response
      */
     static favoriteRestaurant(restaurant) {
-        return fetch(`${DBHelper.DATABASE_URL}restaurants/${restaurant.id}/?is_favorite=${!restaurant.is_favorite}`, {method: "PUT"})
+        return fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurant.id}/?is_favorite=${!restaurant.is_favorite}`, {method: "PUT"})
             .then(result => result)
             .catch(error => console.error("error in sending favorite ==> ", error));
     }
