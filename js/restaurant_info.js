@@ -246,14 +246,14 @@ const favoriteRestaurant = () => {// eslint-disable-line no-unused-vars
         is_favorite: favoriteIconHtml.innerHTML === "❤️" || false,
     };
     if (navigator.onLine) {
-        data.isFavorited = !data.is_favorite;
+        data.is_favorite = !data.is_favorite;
         DBHelper.favoriteRestaurant(data)
             .then(() => favoriteIconHtml.innerHTML = data.is_favorite ? "❤️" : "💙")
             .catch(error => console.error("Unable to favorite restaurant", error));
     } else {
-        data.isFavorited = !data.is_favorite;
+        data.is_favorite = !data.is_favorite;
         favoriteIconHtml.innerHTML = data.is_favorite ? "❤️" : "💙";
-        saveLocalFavorite({id: data.id, isFavorited: data.is_favorite, type: "favorite"});
+        saveLocalFavorite({id: data.id, is_favorite: data.is_favorite, type: "favorite"});
     }
 };
 
@@ -262,7 +262,6 @@ const favoriteRestaurant = () => {// eslint-disable-line no-unused-vars
  * @param {object} favorite - restaurant review
  */
 const saveLocalFavorite = favorite => {
-    console.log("saving local favorite");
     navigator.serviceWorker.ready
         .then(service => service.active.postMessage({
             type: "favorite",

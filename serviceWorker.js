@@ -47,7 +47,6 @@ const staticAssets = [
  * Install event
  */
 self.addEventListener("install", event => {
-    console.info("install");
     event.waitUntil(
         caches.open(staticCache)
             .then(cache => cache.addAll(staticAssets))
@@ -59,7 +58,6 @@ self.addEventListener("install", event => {
  * Activate event
  */
 self.addEventListener("activate", event => {
-    console.info("activate");
     event.waitUntil(
         caches.keys()
             .then(cacheNames => Promise.all(
@@ -75,7 +73,6 @@ self.addEventListener("activate", event => {
  * Message event
  */
 self.addEventListener("message", event => {
-    console.info("SW Received Message:", event);
     if (event.data.type === "favorite") {
         return favoriteDb.then(db =>
             db.transaction(objectStore, "readwrite").objectStore(objectStore).put(event.data.payload, "favorite")// eslint-disable-line promise/no-nesting
@@ -94,16 +91,10 @@ self.addEventListener("sync", event => {
     const url = "https://mws-restaurants-stage-3.herokuapp.com";
     if (event.tag === "Synchronize") {
         reviewDB.then(db => db.transaction(objectStore).objectStore(objectStore).getAll()// eslint-disable-line promise/no-nesting
-            .then(reviews => {
-                console.log("review:", reviews);
-                return reviews.map(review => fetch(`${url}/reviews/`, {body: review, method: "POST"}));
-            }))
+            .then(reviews => reviews.map(review => fetch(`${url}/reviews/`, {body: review, method: "POST"}))))
             .catch(error => console.error("something failed", error));
         favoriteDb.then(db => db.transaction(objectStore).objectStore(objectStore).getAll()// eslint-disable-line promise/no-nesting
-            .then(favorites => {
-                console.log("favorite:", favorites);
-                return favorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`));
-            }))
+            .then(favorites => favorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`))))
             .catch(error => console.error("something failed", error));
     }
 });
@@ -112,7 +103,6 @@ self.addEventListener("sync", event => {
  * Fetch from network event
  */
 self.addEventListener("fetch", event => {
-    console.log("Fetch event", event);
     if (event.request.method === "GET" &&
         event.request.url.search("localhost") === -1) {
         event.respondWith(serveResponseIdb(event.request));
