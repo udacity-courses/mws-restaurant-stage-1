@@ -51,7 +51,7 @@ const fetchRestaurantFromURL = () => {
 };
 
 /**
- * Create restaurant HTML and add it to the webpage
+ * Create restaurant HTML and add it to the web page
  * @param {Object} restaurant
  * @param {Number} restaurant.id
  * @param {string} restaurant.name
@@ -204,7 +204,7 @@ const getParameterByName = (name, url = window.location.href) => {
 
 /**
  * Get form data
- * @return {{rating:number, comment:string}|boolean} form data
+ * @return {{name:String, rating:number, comments:string, restaurant_id:Number}} form data
  */
 const getFormData = () => ({
     name: document.getElementById("reviewer-name").value || "",
