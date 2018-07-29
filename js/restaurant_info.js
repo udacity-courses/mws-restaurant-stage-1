@@ -1,4 +1,4 @@
-/* eslint-disable no-console, prefer-destructuring, no-useless-escape */
+/* eslint-disable no-console, prefer-destructuring, no-useless-escape, no-debugger */
 /* global DBHelper, google */
 /** @namespace google.maps */
 /** @namespace google.maps.Map */
@@ -10,8 +10,9 @@ if ("serviceWorker" in navigator) {
             .catch(error => console.error("Error registering service worker", error));
     });
     window.addEventListener("online", () => {
-        const serviceWorker = navigator.serviceWorker.ready;
-        serviceWorker.sync.register("Synchronize");
+        navigator.serviceWorker.ready
+            .then(service => service.sync.register("Synchronize"))
+            .catch(error => console.error("Service worker not ready", error));
     });
 }
 
@@ -19,18 +20,21 @@ if ("serviceWorker" in navigator) {
  * Initialize Google map, called from HTML.
  */
 window.initMap = () => {
-    fetchRestaurantFromURL();
+    fetchRestaurantFromURL()
+        .then(id => fetchRestaurantReviews(id))
+        .catch(error => console.error("error fetching restaurant", error));
 };
 
 /**
  * Get current restaurant from page URL.
+ * @return {Promise<Number>} returns the restaurant id
  */
 const fetchRestaurantFromURL = () => {
     const id = getParameterByName("id");
     if (!id) { // no id found in URL
         console.error(`No restaurant id ${id} in URL`);
     } else {
-        DBHelper.fetchRestaurantById(id)
+        return DBHelper.fetchRestaurantById(id)
             .then(response => {
                 fillBreadcrumb(response);
                 self.map = new google.maps.Map(document.getElementById("map"), {
@@ -39,7 +43,8 @@ const fetchRestaurantFromURL = () => {
                     scrollwheel: false,
                 });
                 DBHelper.mapMarkerForRestaurant(response, self.map);
-                return fillRestaurantHTML(response);
+                fillRestaurantHTML(response);
+                return parseInt(id);
             })
             .catch(error => console.error(error));
     }
@@ -48,6 +53,7 @@ const fetchRestaurantFromURL = () => {
 /**
  * Create restaurant HTML and add it to the webpage
  * @param {Object} restaurant
+ * @param {Number} restaurant.id
  * @param {string} restaurant.name
  * @param {string} restaurant.address
  * @param {string} restaurant.cuisine_type
@@ -58,9 +64,10 @@ const fetchRestaurantFromURL = () => {
  */
 const fillRestaurantHTML = restaurant => {// eslint-disable-line max-statements
     const name = document.getElementById("restaurant-name");
+    document.getElementById("restaurant-id").value = restaurant.id;
     name.innerHTML = restaurant.name;
     const favoriteIconSpan = document.getElementById("isFavorite");
-    favoriteIconSpan.innerHTML = restaurant.is_favorite === "true" ? "💘" : "💙";
+    favoriteIconSpan.innerHTML = restaurant.is_favorite === "true" ? "❤️" : "💙";
     favoriteIconSpan.className = "isFavorite";
 
     const address = document.getElementById("restaurant-address");
@@ -74,11 +81,9 @@ const fillRestaurantHTML = restaurant => {// eslint-disable-line max-statements
     const cuisine = document.getElementById("restaurant-cuisine");
     cuisine.innerHTML = restaurant.cuisine_type;
 
-    // fill operating hours
     if (restaurant.operating_hours) {
         fillRestaurantHoursHTML(restaurant.operating_hours);
     }
-    // fill reviews
     fillReviewsHTML(restaurant.reviews);
 };
 
@@ -109,27 +114,30 @@ const fillRestaurantHoursHTML = operatingHours => {
 const fillReviewsHTML = reviews => {// eslint-disable-line max-statements
     const container = document.getElementById("reviews-container");
     const title = document.createElement("h2");
+    container.innerHTML = "";
     title.innerHTML = "Reviews";
     container.appendChild(title);
 
     if (!reviews) {
         const noReviews = document.createElement("p");
+        noReviews.id = "no-reviews";
         noReviews.innerHTML = "No reviews yet!";
         container.appendChild(noReviews);
-        return;
+    } else {
+        const ul = document.createElement("ul");
+        ul.id = "reviews-list";
+        reviews.forEach(review => {
+            ul.appendChild(createReviewHTML(review));
+        });
+        container.appendChild(ul);
     }
-    const ul = document.getElementById("reviews-list");
-    reviews.forEach(review => {
-        ul.appendChild(createReviewHTML(review));
-    });
-    container.appendChild(ul);
 };
 
 /**
  * Create review HTML and add it to the web page.
  * @param {Object} review
  * @param {string} review.name
- * @param {string} review.date
+ * @param {string} review.createdAt - review creation date
  * @param {string} review.rating
  * @param {string} review.comments
  * @return {Element}
@@ -143,7 +151,7 @@ const createReviewHTML = review => {// eslint-disable-line max-statements
     li.appendChild(name);
 
     const date = document.createElement("p");
-    date.innerHTML = review.date;
+    date.innerHTML = new Date(review.createdAt).toLocaleDateString();
     date.className = "review-date";
     li.appendChild(date);
 
@@ -196,26 +204,23 @@ const getParameterByName = (name, url = window.location.href) => {
 
 /**
  * Get form data
- * @param {Object} restaurant - restaurant
  * @return {{rating:number, comment:string}|boolean} form data
  */
-const getFormData = restaurant => ({
+const getFormData = () => ({
     name: document.getElementById("reviewer-name").value || "",
-    restaurant_id: restaurant.id,
+    restaurant_id: document.getElementById("restaurant-id").value,
     rating: document.getElementById("rating").value || 1,
-    comment: document.getElementById("review").value || "",
+    comments: document.getElementById("review").value || "",
 });
 
 /**
  * Fetch Restaurants reviews
- * @param {object} restaurant - restaurant
+ * @param {object} restaurantId - restaurant identifier
  * @return {*}
  */
-const fetchRestaurantReviews = restaurant => DBHelper.fetchReviews()
-    .then(response => {
-        const restaurantReviews = response.filter(obj => obj.restaurant_id === restaurant.id);
-        return fillReviewsHTML(restaurantReviews);
-    });
+const fetchRestaurantReviews = restaurantId => DBHelper.fetchReviews(restaurantId)
+    .then(response => fillReviewsHTML(response))
+    .catch(error => console.error("Error fetching reviews", error));
 
 /**
  * Add review offline
@@ -234,21 +239,21 @@ const addOfflineReview = review => {
 /**
  * Favorite a restaurant
  */
-const favoriteRestaurant = () => {
+const favoriteRestaurant = () => {// eslint-disable-line no-unused-vars
     const favoriteIconHtml = document.getElementById("isFavorite");
     const data = {
-        id: self.restaurant.id,
-        isFavorited: favoriteIconHtml.innerHTML === "💘" || false,
+        id: document.getElementById("restaurant-id").value,
+        is_favorite: favoriteIconHtml.innerHTML === "❤️" || false,
     };
     if (navigator.onLine) {
-        data.isFavorited = !data.isFavorited;
+        data.isFavorited = !data.is_favorite;
         DBHelper.favoriteRestaurant(data)
-            .then(() => favoriteIconHtml.innerHTML = data.isFavorited ? "💘" : "💙")
+            .then(() => favoriteIconHtml.innerHTML = data.is_favorite ? "❤️" : "💙")
             .catch(error => console.error("Unable to favorite restaurant", error));
     } else {
-        data.isFavorited = !data.isFavorited;
-        favoriteIconHtml.innerHTML = data.isFavorited ? "💘" : "💙";
-        saveLocalFavorite([{id: data.id, isFavorited: data.isFavorited, type: "favorite"}]);
+        data.isFavorited = !data.is_favorite;
+        favoriteIconHtml.innerHTML = data.is_favorite ? "❤️" : "💙";
+        saveLocalFavorite({id: data.id, isFavorited: data.is_favorite, type: "favorite"});
     }
 };
 
@@ -257,12 +262,13 @@ const favoriteRestaurant = () => {
  * @param {object} favorite - restaurant review
  */
 const saveLocalFavorite = favorite => {
-    let pendingFavorites = localStorage.getItem("pendingFavorites");
-    if (pendingFavorites) {
-        pendingFavorites = JSON.parse(pendingFavorites);
-        pendingFavorites = pendingFavorites.concat([favorite]);
-    }
-    localStorage.setItem("PendingFavs", JSON.stringify(pendingFavorites));
+    console.log("saving local favorite");
+    navigator.serviceWorker.ready
+        .then(service => service.active.postMessage({
+            type: "favorite",
+            payload: favorite,
+        }))
+        .catch(error => console.error("failed sending message to SW", error));
 };
 
 
@@ -271,31 +277,33 @@ const saveLocalFavorite = favorite => {
  * @param {object} review - restaurant review
  */
 const saveLocalReview = review => {
-    let pendingReviews = localStorage.getItem("pendingReviews");
-    if (pendingReviews) {
-        pendingReviews = JSON.parse(pendingReviews);
-        pendingReviews = pendingReviews.concat([review]);
-    }
-    localStorage.setItem("PendingReviews", JSON.stringify(pendingReviews));
+    navigator.serviceWorker.ready
+        .then(service => service.active.postMessage({
+            type: "review",
+            payload: review,
+        }))
+        .catch(error => console.error("Error sending review to service worker", error));
 };
 
 /**
- * Send Restaurant Review
- * @param {object} restaurant - restaurant
+ * Send Restaurant Review.
+ * called from restaurant.html
  */
-const sendReview = restaurant => {
+const sendReview = () => {// eslint-disable-line no-unused-vars
     const form = document.getElementById("review_form");
-    const data = getFormData(restaurant);
+    const data = getFormData();
     if (navigator.onLine) {
-        DBHelper.postReview(data);
-        form.reset();
-        fetchRestaurantReviews(restaurant);
+        DBHelper.postReview(data).then(() => {
+            form.reset();
+            fetchRestaurantReviews(document.getElementById("restaurant-id").value);
+            return true;
+        }).catch(error => console.error("Review posting failed", error));
     } else {
-        const review = {
+        const review = Object.assign({}, data, {
             createdAt: Date.now(),
             type: "review",
             id: data.createdAt,
-        };
+        });
         addOfflineReview(review);
         saveLocalReview(review);
         form.reset();

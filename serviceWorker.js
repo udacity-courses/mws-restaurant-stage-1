@@ -5,9 +5,20 @@ self.importScripts("js/idb.js");
 const objectStore = "objectStore";
 
 // eslint-disable-next-line no-undef
-const dbPromise = idb.open("restaurant-store", 1, upgradeDB => {
+const restaurantDB = idb.open("restaurant-store", 1, upgradeDB => {
     upgradeDB.createObjectStore(objectStore);
 });
+
+// eslint-disable-next-line no-undef
+const favoriteDb = idb.open("favorite-store", 1, upgradeDB => {
+    upgradeDB.createObjectStore(objectStore);
+});
+
+// eslint-disable-next-line no-undef
+const reviewDB = idb.open("review-store", 1, upgradeDB => {
+    upgradeDB.createObjectStore(objectStore);
+});
+
 
 const staticCache = "restaurant-static";
 const staticAssets = [
@@ -60,14 +71,43 @@ self.addEventListener("activate", event => {
     );
 });
 
+/**
+ * Message event
+ */
+self.addEventListener("message", event => {
+    console.info("SW Received Message:", event);
+    if (event.data.type === "favorite") {
+        return favoriteDb.then(db =>
+            db.transaction(objectStore, "readwrite").objectStore(objectStore).put(event.data.payload, "favorite")// eslint-disable-line promise/no-nesting
+                .then(result => console.info("Favorite Operation succeed", result))
+                .catch(error => console.error("Favorite operation failed", error)));
+    }
+    if (event.data.type === "review") {
+        return reviewDB.then(db =>
+            db.transaction(objectStore, "readwrite").objectStore(objectStore).put(event.data.payload, "review")// eslint-disable-line promise/no-nesting
+                .then(result => console.info("Review Operation succeed", result))
+                .catch(error => console.error("Review operation failed", error)));
+    }
+});
+
 self.addEventListener("sync", event => {
     const url = "https://mws-restaurants-stage-3.herokuapp.com";
     if (event.tag === "Synchronize") {
-        const pendingReviews = JSON.parse(localStorage.getItem("pendingReviews"));
-        const pendingFavorites = JSON.parse(localStorage.getItem("pendingFavorites"));
-        let pendingRequests = [Promise.all(pendingReviews.map(review => fetch(`${url}/reviews/`, {body: review, method: "POST"})))];
-        pendingRequests = pendingRequests.concat(Promise.all(pendingFavorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`))));
-        event.waitUntil(Promise.all(pendingRequests));
+        reviewDB.then(db => db.transaction(objectStore).objectStore(objectStore).getAll()// eslint-disable-line promise/no-nesting
+            .then(reviews => {
+                console.log("review:", reviews);
+                return reviews.map(review => fetch(`${url}/reviews/`, {body: review, method: "POST"}));
+            }))
+            .catch(error => console.error("something failed", error));
+        favoriteDb.then(db => db.transaction(objectStore).objectStore(objectStore).getAll()// eslint-disable-line promise/no-nesting
+            .then(favorites => {
+                console.log("favorite:", favorites);
+                return favorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`));
+            }))
+            .catch(error => console.error("something failed", error));
+        debugger; // eslint-disable-line no-debugger
+        // let pendingRequests = [Promise.all(pendingReviews.map(review => fetch(`${url}/reviews/`, {body: review, method: "POST"})))];
+        // pendingRequests = pendingRequests.concat(Promise.all(pendingFavorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`))));
         // Promise.all(pendingReviews.map(url => fetch(url).then(resp => resp.text()))).then(texts => {console.log("finished", texts);});
     }
 });
@@ -76,8 +116,9 @@ self.addEventListener("sync", event => {
  * Fetch from network event
  */
 self.addEventListener("fetch", event => {
-    const port = event.request.url.split("/")[2].split(":")[1];// eslint-disable-line prefer-destructuring
-    if (port !== undefined && port === "1337") {
+    console.log("Fetch event", event);
+    if (event.request.method === "GET" &&
+        event.request.url.search("localhost") === -1) {
         event.respondWith(serveResponseIdb(event.request));
     } else {
         event.respondWith(serveResource(event.request));
@@ -90,7 +131,7 @@ self.addEventListener("fetch", event => {
  * @return {Promise<Response | void>}
  */
 const serveResponseIdb = request => {
-    dbPromise
+    restaurantDB
         .then(db => {
             const response = new Response(db.transaction(objectStore).objectStore(objectStore).get(request.url));
             return Promise.resolve(response);// eslint-disable-line promise/no-return-wrap
@@ -100,7 +141,7 @@ const serveResponseIdb = request => {
     return fetch(request)
         .then(fetchResponse => {
             if (fetchResponse.headers.get("Content-Type").match(/application\/json/i)) {
-                dbPromise.then(db => {// eslint-disable-line promise/always-return, promise/no-nesting
+                restaurantDB.then(db => {// eslint-disable-line promise/always-return, promise/no-nesting
                     fetchResponse.clone().json().then(content => {// eslint-disable-line promise/catch-or-return, promise/no-nesting
                         const tx = db.transaction(objectStore, "readwrite");
                         tx.objectStore(objectStore)// eslint-disable-line promise/no-nesting
@@ -132,9 +173,9 @@ const serveResource = request =>
                         return response;
                     }
 
-                    return fetch(request)
+                    return fetch(request) // eslint-disable-line promise/no-nesting
                         .then(networkResponse => {
-                            cache.put(request, networkResponse.clone())
+                            cache.put(request, networkResponse.clone()) // eslint-disable-line promise/no-nesting
                                 .then(() => console.info("Caching succeed"))
                                 .catch(error => console.error("Caching failed", error));
                             return networkResponse;

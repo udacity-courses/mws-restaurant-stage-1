@@ -23,3 +23,8 @@ Content-Type: application/json
   }
 
 ###
+
+GET {{host}}/reviews/?restaurant_id={{restaurant_id}}&limit=50&sort=createdAt%20DESC
+Accept: application/json
+
+###

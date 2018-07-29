@@ -33,10 +33,11 @@ class DBHelper {
 
     /**
      * Fetch restaurant reviews
+     * @param {Number} restaurantId - restaurant id
      * @return {Promise<Object[]>|null}
      */
-    static fetchReviews() {
-        return fetch(`${DBHelper.DATABASE_URL}/reviews`)
+    static fetchReviews(restaurantId) {
+        return fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${restaurantId}&sort=createdAt%20DESC`)
             .then(response => response.json())
             .then(reviews => reviews)
             .catch(error => console.error("unable to retrieve restaurant reviews", error));
@@ -45,9 +46,10 @@ class DBHelper {
     /**
      * post restaurant review
      * @param {object} data - review data
+     * @return {Promise<any>}
      */
     static postReview(data) {
-        fetch(`${DBHelper.DATABASE_URL}/reviews`,
+        return fetch(`${DBHelper.DATABASE_URL}/reviews`,
             {
                 body: JSON.stringify(data),
                 method: "POST",
@@ -60,11 +62,11 @@ class DBHelper {
      * Favorite a reastaurant
      * @param {object} restaurant - restaurant
      * @param {number} restaurant.id - identifier
-     * @param {boolean} restaurant.isFavorited - indicates is restaurant is favorited
+     * @param {boolean} restaurant.is_favorite - indicates is restaurant is favorited
      * @return {*} return the promise response
      */
     static favoriteRestaurant(restaurant) {
-        return fetch(`${DBHelper.DATABASE_URL}restaurants/${restaurant.id}/?is_favorite=${!restaurant.isFavorited}`, {method: "PUT",})
+        return fetch(`${DBHelper.DATABASE_URL}restaurants/${restaurant.id}/?is_favorite=${!restaurant.is_favorite}`, {method: "PUT"})
             .then(result => result)
             .catch(error => console.error("error in sending favorite ==> ", error));
     }

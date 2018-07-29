@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="Description" content="Mobile Web Specialist - Stage 3">
     <meta name="theme-color" content="#317EFB"/>
-    <link rel="icon" href="/img/favicon.ico" type="image/ico" sizes="16x16">
+    <link rel="icon" href="img/favicon.ico" type="image/ico" sizes="16x16">
     <link rel="manifest" href="manifest.json"/>
     <link rel="stylesheet" src="https://normalize-css.googlecode.com/svn/trunk/normalize.css"/>
-    <link rel="stylesheet" href="css/styles.css" type="text/css">
+    <link rel="stylesheet" as="style" href="css/styles.css" type="text/css">
     <title>Restaurant Info</title>
 </head>
 
@@ -26,9 +27,10 @@
         <div id="map" role="application"></div>
     </section>
     <section id="restaurant-container">
+        <input type="hidden" name="restaurant-id" id="restaurant-id">
         <button id="isFavorite" onclick="favoriteRestaurant()">Favorite</button>
         <h2 id="restaurant-name">&nbsp;</h2>
-        <img id="restaurant-img">
+        <img id="restaurant-img" src="http://via.placeholder.com/350x150">
         <p id="restaurant-cuisine">&nbsp;</p>
         <p id="restaurant-address">&nbsp;</p>
         <table id="restaurant-hours">&nbsp;</table>
@@ -38,18 +40,20 @@
     </section>
     <section id="review-container">
         <h3>Submit your review</h3>
-        <form action="javascript:void();">
+        <form action="javascript:void(0);" id="review_form">
             <div>
-                <label for="name">Name:</label>
-                <input id="name" type="text" placeholder="your name" required>
+                <label for="reviewer-name">Name:</label>
+                <input id="reviewer-name" type="text" placeholder="your name" required>
             </div>
             <div>
-                <label for="rating">Rate</label>
-                <input id="rating" type="number" min="1" max="5" required>
+                <label for="rating">Rate:</label>
+                <input id="rating" type="number" min="1" max="5" required value="3">
             </div>
-            <label for="review">Write your review</label>
-            <textarea name="review" id="review" cols="10" rows="10" placeholder="I love it"></textarea>
-            <button id="send_review" onclick="sendReview()">Send</button>
+            <label for="review">Write your review:</label><br/>
+            <textarea name="review" id="review" cols="10" rows="10" placeholder="I love it">&nbsp;</textarea>
+            <div>
+                <button id="send_review" onclick="sendReview()">Send</button>
+            </div>
         </form>
     </section>
 </main>
