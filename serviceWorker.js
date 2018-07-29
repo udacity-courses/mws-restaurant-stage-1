@@ -105,7 +105,6 @@ self.addEventListener("sync", event => {
                 return favorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`));
             }))
             .catch(error => console.error("something failed", error));
-        debugger; // eslint-disable-line no-debugger
         // let pendingRequests = [Promise.all(pendingReviews.map(review => fetch(`${url}/reviews/`, {body: review, method: "POST"})))];
         // pendingRequests = pendingRequests.concat(Promise.all(pendingFavorites.map(favorite => fetch(`${url}/restaurants/${favorite.id}/?is_favorite=${favorite.is_favorite}`))));
         // Promise.all(pendingReviews.map(url => fetch(url).then(resp => resp.text()))).then(texts => {console.log("finished", texts);});
