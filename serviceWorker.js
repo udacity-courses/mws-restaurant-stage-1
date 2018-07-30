@@ -103,8 +103,12 @@ self.addEventListener("sync", event => {
  * Fetch from network event
  */
 self.addEventListener("fetch", event => {
+    const port = event.request.url.split("/")[2].split(":")[1];
+
     if (event.request.method === "GET" &&
-        event.request.url.search("localhost") === -1) {
+        (event.request.url.search("localhost") === -1) ||   // calling for heroku and google maps api
+        (port !== undefined && port === "1337")             // calling for local backend running on port 1337
+    ) {
         event.respondWith(serveResponseIdb(event.request));
     } else {
         event.respondWith(serveResource(event.request));
