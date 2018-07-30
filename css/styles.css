@@ -276,7 +276,7 @@ nav h1 a {
     width: 90%;
 }
 
-#restaurant-container, #reviews-container {
+#restaurant-container, #reviews-container, #review-container {
     border-bottom: 1px solid #d9d9d9;
     border-top: 1px solid #fff;
     padding: 140px 40px 30px;
@@ -442,6 +442,7 @@ nav h1 a {
 #review_form {
     display: flex;
     flex-direction: column;
+    width: 90%;
 }
 
 #review_form > div {
@@ -504,7 +505,7 @@ nav h1 a {
 
 #isFavorite {
     float: left;
-    margin: 15px 0 30px;
-    background: transparent;
     border: none;
+    background: transparent;
+    margin: 15px 0 30px;
 }
