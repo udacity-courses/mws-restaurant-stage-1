@@ -50,7 +50,7 @@
     "gulp-sass": "^4.1.0",
     "gulp-size": "^3.0.0",
     "gulp-sourcemaps": "^2.6.4",
-    "gulp-uglify": "^3.0.0",
+    "gulp-uglify": "^3.0.2",
     "gulp-useref": "^4.0.1",
     "gulp-webp": "^3.0.0",
     "http-server": "^0.11.1",
