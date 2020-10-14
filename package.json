@@ -62,7 +62,7 @@
     "psi": "^3.1.0",
     "run-sequence": "^2.2.1",
     "sw-precache": "^5.2.1",
-    "webpack": "^4.10.2",
+    "webpack": "^4.44.2",
     "webpack-cli": "^2.0.14"
   }
 }
