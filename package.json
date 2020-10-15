@@ -52,7 +52,7 @@
     "gulp-sourcemaps": "^2.6.4",
     "gulp-uglify": "^3.0.2",
     "gulp-useref": "^4.0.1",
-    "gulp-webp": "^3.0.0",
+    "gulp-webp": "^4.0.1",
     "http-server": "^0.11.1",
     "idb": "^5.0.7",
     "imagemin-pngquant": "^9.0.1",
