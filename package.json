@@ -29,7 +29,7 @@
     "browser-sync": "^2.26.12",
     "del": "^3.0.0",
     "eslint": "^7.11.0",
-    "eslint-config-google": "^0.9.1",
+    "eslint-config-google": "^0.14.0",
     "eslint-plugin-fp": "^2.3.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-promise": "^4.2.1",
