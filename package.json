@@ -51,7 +51,7 @@
     "gulp-size": "^3.0.0",
     "gulp-sourcemaps": "^2.6.5",
     "gulp-uglify": "^3.0.2",
-    "gulp-useref": "^4.0.1",
+    "gulp-useref": "^5.0.0",
     "gulp-webp": "^4.0.1",
     "http-server": "^0.12.3",
     "idb": "^5.0.7",
