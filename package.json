@@ -54,7 +54,7 @@
     "gulp-useref": "^5.0.0",
     "gulp-webp": "^4.0.1",
     "http-server": "^0.12.3",
-    "idb": "^5.0.7",
+    "idb": "^5.0.8",
     "imagemin-pngquant": "^9.0.1",
     "imagemin-webp": "^6.0.0",
     "lazysizes": "^5.2.2",
