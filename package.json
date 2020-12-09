@@ -28,7 +28,7 @@
     "babel-register": "^6.26.0",
     "browser-sync": "^2.26.13",
     "del": "^6.0.0",
-    "eslint": "^7.14.0",
+    "eslint": "^7.15.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-fp": "^2.3.0",
     "eslint-plugin-import": "^2.22.1",
