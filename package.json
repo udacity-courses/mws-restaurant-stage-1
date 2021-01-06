@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/anyulled/mws-restaurant-stage-1#readme",
   "devDependencies": {
-    "apache-server-configs": "^4.0.0",
+    "apache-server-configs": "^4.1.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^10.1.0",
