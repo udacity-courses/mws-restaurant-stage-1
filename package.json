@@ -59,7 +59,7 @@
     "imagemin-webp": "^6.0.0",
     "lazysizes": "^5.2.2",
     "path": "^0.12.7",
-    "psi": "^4.0.1",
+    "psi": "^4.1.0",
     "run-sequence": "^2.2.1",
     "sw-precache": "^5.2.1",
     "webpack": "^5.11.1",
