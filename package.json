@@ -47,7 +47,7 @@
     "gulp-jasmine-phantom": "^3.0.0",
     "gulp-load-plugins": "^2.0.6",
     "gulp-newer": "^1.4.0",
-    "gulp-sass": "^4.1.0",
+    "gulp-sass": "^5.1.0",
     "gulp-size": "^4.0.0",
     "gulp-sourcemaps": "^3.0.0",
     "gulp-uglify": "^3.0.2",
